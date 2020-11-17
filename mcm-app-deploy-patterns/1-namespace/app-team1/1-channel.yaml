@@ -1,0 +1,119 @@
+---
+apiVersion: app.ibm.com/v1alpha1
+kind: Channel
+metadata:
+  name: app-team1-channel
+  namespace: app-team1-entitlement
+  labels:
+    app: app-team1
+    team: team1
+    catagory: webapp
+spec:
+  type: Namespace
+  pathname: app-team1-entitlement
+
+---
+apiVersion: app.ibm.com/v1alpha1
+kind: Deployable
+metadata:
+  name: app-team1-deployment
+  namespace: app-team1-entitlement
+  annotations:
+    app.ibm.com/is-local-deployable: "false"
+  labels:
+    app: app-team1
+    team: team1
+    catagory: webapp
+spec:
+  template:
+    kind: Deployment
+    apiVersion: apps/v1
+    metadata:
+      name: app-team1-deployment
+      labels:
+        app: app-team1
+        release: mcm-app-management-patterns
+        tier: frontend
+    spec:
+      selector:
+        matchLabels:
+          app: app-team1
+          release: mcm-app-management-patterns
+          tier: frontend
+      replicas: 1
+      template:
+        metadata:
+          labels:
+            app: app-team1
+            release: mcm-app-management-patterns
+            tier: frontend
+        spec:
+          containers:
+            - name: frontend
+              image: "buniak/pacman"
+              imagePullPolicy: Always
+              ports:
+                - containerPort: 8080
+---
+apiVersion: app.ibm.com/v1alpha1
+kind: Deployable
+metadata:
+  name: app-team1-service
+  namespace: app-team1-entitlement
+  annotations:
+    app.ibm.com/is-local-deployable: "false"
+  labels:
+    app: app-team1
+    team: team1
+    catagory: webapp
+spec:
+  template:
+    kind: Service
+    apiVersion: v1
+    metadata:
+      name: app-team1-service
+      labels:
+        app: app-team1
+        release: mcm-app-management-patterns
+        tier: frontend
+    spec:
+      ports:
+      - port: 8080
+        protocol: TCP
+        targetPort: 8080
+      selector:
+        app: app-team1
+        release: mcm-app-management-patterns
+        tier: frontend
+      type: ClusterIP
+---
+apiVersion: app.ibm.com/v1alpha1
+kind: Deployable
+metadata:
+  name: app-team1-route
+  namespace: app-team1-entitlement
+  annotations:
+    app.ibm.com/is-local-deployable: "false"
+  labels:
+    app: app-team1
+    team: team1
+    catagory: webapp
+spec:
+  template:
+    kind: Route
+    apiVersion: route.openshift.io/v1
+    metadata:
+      name: app-team1-route
+      labels:
+        app: app-team1
+        release: mcm-app-management-patterns
+        tier: frontend
+    spec:
+      subdomain: ''
+      to:
+        kind: Service
+        name: app-team1-service
+        weight: 100
+      port:
+        targetPort: 8080
+      wildcardPolicy: None
