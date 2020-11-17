@@ -1,0 +1,119 @@
+---
+apiVersion: app.ibm.com/v1alpha1
+kind: Channel
+metadata:
+  name: app-kubetoy-channel
+  namespace: app-kubetoy-entitlement
+  labels:
+    app: kubetoy
+    team: team1
+    catagory: webapp
+spec:
+  type: Namespace
+  pathname: app-kubetoy-entitlement
+
+---
+apiVersion: app.ibm.com/v1alpha1
+kind: Deployable
+metadata:
+  name: app-kubetoy-deployment
+  namespace: app-kubetoy-entitlement
+  annotations:
+    app.ibm.com/is-local-deployable: "false"
+  labels:
+    app: kubetoy
+    team: team1
+    catagory: webapp
+spec:
+  template:
+    kind: Deployment
+    apiVersion: apps/v1
+    metadata:
+      name: app-kubetoy-deployment
+      labels:
+        app: kubetoy
+        release: mcm-app-management-patterns
+        tier: frontend
+    spec:
+      selector:
+        matchLabels:
+          app: kubetoy
+          release: mcm-app-management-patterns
+          tier: frontend
+      replicas: 1
+      template:
+        metadata:
+          labels:
+            app: kubetoy
+            release: mcm-app-management-patterns
+            tier: frontend
+        spec:
+          containers:
+            - name: frontend
+              image: "docker.io/ibmicpcoc/kubetoy:1.9.1"
+              imagePullPolicy: Always
+              ports:
+                - containerPort: 8080
+---
+apiVersion: app.ibm.com/v1alpha1
+kind: Deployable
+metadata:
+  name: app-kubetoy-service
+  namespace: app-kubetoy-entitlement
+  annotations:
+    app.ibm.com/is-local-deployable: "false"
+  labels:
+    app: kubetoy
+    team: team1
+    catagory: webapp
+spec:
+  template:
+    kind: Service
+    apiVersion: v1
+    metadata:
+      name: app-kubetoy-service
+      labels:
+        app: kubetoy
+        release: mcm-app-management-patterns
+        tier: frontend
+    spec:
+      ports:
+      - port: 8080
+        protocol: TCP
+        targetPort: 8080
+      selector:
+        app: kubetoy
+        release: mcm-app-management-patterns
+        tier: frontend
+      type: ClusterIP
+---
+apiVersion: app.ibm.com/v1alpha1
+kind: Deployable
+metadata:
+  name: app-kubetoy-route
+  namespace: app-kubetoy-entitlement
+  annotations:
+    app.ibm.com/is-local-deployable: "false"
+  labels:
+    app: kubetoy
+    team: team1
+    catagory: webapp
+spec:
+  template:
+    kind: Route
+    apiVersion: route.openshift.io/v1
+    metadata:
+      name: app-kubetoy-route
+      labels:
+        app: kubetoy
+        release: mcm-app-management-patterns
+        tier: frontend
+    spec:
+      subdomain: ''
+      to:
+        kind: Service
+        name: app-kubetoy-service
+        weight: 100
+      port:
+        targetPort: 8080
+      wildcardPolicy: None
