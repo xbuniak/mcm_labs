@@ -1,0 +1,119 @@
+---
+apiVersion: app.ibm.com/v1alpha1
+kind: Channel
+metadata:
+  name: app-sushi
+  namespace: app-sushi-entitlement
+  labels:
+    app: app-sushi
+    team: team1
+    catagory: webapp
+spec:
+  type: Namespace
+  pathname: app-sushi-entitlement
+
+---
+apiVersion: app.ibm.com/v1alpha1
+kind: Deployable
+metadata:
+  name: app-sushi-deployment
+  namespace: app-sushi-entitlement
+  annotations:
+    app.ibm.com/is-local-deployable: "false"
+  labels:
+    app: app-sushi
+    team: team1
+    catagory: webapp
+spec:
+  template:
+    kind: Deployment
+    apiVersion: apps/v1
+    metadata:
+      name: app-sushi-deployment
+      labels:
+        app: app-sushi
+        release: mcm-app-management-patterns
+        tier: frontend
+    spec:
+      selector:
+        matchLabels:
+          app: app-sushi
+          release: mcm-app-management-patterns
+          tier: frontend
+      replicas: 1
+      template:
+        metadata:
+          labels:
+            app: app-sushi
+            release: mcm-app-management-patterns
+            tier: frontend
+        spec:
+          containers:
+            - name: frontend
+              image: "buniak/sushiweb"
+              imagePullPolicy: Always
+              ports:
+                - containerPort: 8080
+---
+apiVersion: app.ibm.com/v1alpha1
+kind: Deployable
+metadata:
+  name: app-sushi-service
+  namespace: app-sushi-entitlement
+  annotations:
+    app.ibm.com/is-local-deployable: "false"
+  labels:
+    app: app-sushi
+    team: team1
+    catagory: webapp
+spec:
+  template:
+    kind: Service
+    apiVersion: v1
+    metadata:
+      name: app-sushi-service
+      labels:
+        app: app-sushi
+        release: mcm-app-management-patterns
+        tier: frontend
+    spec:
+      ports:
+      - port: 8080
+        protocol: TCP
+        targetPort: 8080
+      selector:
+        app: app-sushi
+        release: mcm-app-management-patterns
+        tier: frontend
+      type: ClusterIP
+---
+apiVersion: app.ibm.com/v1alpha1
+kind: Deployable
+metadata:
+  name: sushi-route
+  namespace: app-sushi-entitlement
+  annotations:
+    app.ibm.com/is-local-deployable: "false"
+  labels:
+    app: app-sushi
+    team: team1
+    catagory: webapp
+spec:
+  template:
+    kind: Route
+    apiVersion: route.openshift.io/v1
+    metadata:
+      name: sushi-route
+      labels:
+        app: app-sushi
+        release: mcm-app-management-patterns
+        tier: frontend
+    spec:
+      subdomain: ''
+      to:
+        kind: Service
+        name: app-sushi-service
+        weight: 100
+      port:
+        targetPort: 8080
+      wildcardPolicy: None
